@@ -1,0 +1,307 @@
+\documentclass{beamer}
+\begin{document}
+\title{Some good practices for software installation}
+\author[Nicolas Vigier]{Nicolas Vigier\\\small{boklm@mars-attacks.org}}
+\date{2013-07-10}
+
+\frame{\titlepage}
+
+\frame{\tableofcontents}
+
+\section{Why you should use packages}
+
+\begin{frame}
+  \frametitle{Installing software}
+  \begin{block}{Simple case: package is available in your distribution}
+    \begin{itemize}
+      \item apt-get install software
+      \item yum install software
+      \item urpmi software
+    \end{itemize}
+  \end{block}
+
+  \begin{block}{A package is not available in your distribution}
+    You need to build it yourself
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Building software}
+
+  \begin{block}{Manual build: ./configure; make; make install}
+    \begin{itemize}
+      \item You don't need to learn packaging
+      \item But creates a lot of problems
+    \end{itemize}
+  \end{block}
+
+  \begin{block}{Create a package}
+    \begin{itemize}
+      \item You need to learn packaging
+      \item It takes more time the first time
+      \item But solve a lot of problems
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Manual build: dependencies}
+
+  Two possible ways to do it
+
+  \begin{block}{Build on production machines}
+    Installing build tools and dependencies on productions machines: not a
+    good idea
+  \end{block}
+
+  \begin{block}{Use a dedicated build server}
+    Need to track the dependencies list to install them on production machines
+  \end{block}
+
+  \begin{block}{In both case}
+    Need to track build depencies: missing dependency can silently disable
+    a feature
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Manual build: updating and other problems}
+
+  \begin{itemize}
+    \item remember build options and build instructions from previous version
+    \item remember if you used any patch
+    \item files installed by a previous version are not removed on update
+    \item uninstall is not easy
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Packages: dependencies management}
+  \begin{itemize}
+    \item Manual runtime and build dependencies listing
+    \item Automatic runtime dependencies detection at the end of package
+          build
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Packages: updating software}
+  \begin{block}{Updating to a new version}
+    In many cases, updating a package to a new version is easy
+    \begin{enumerate}
+      \item Download new version source tarball
+      \item Change the version number in the package file
+      \item Rebuild the package
+    \end{enumerate}
+  \end{block}
+
+  \begin{block}{Example with RPM}
+\begin{verbatim}
+$ cd rpm
+$ wget -p SOURCES/ http://something.com/mysoft-1.1.tar.gz
+$ sed -i 's/^Version: 1.0/Version: 1.1/' SPECS/mypkg.spec
+$ rpmbuild -ba SPECS/mypkg.spec
+\end{verbatim}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Packages: Rebuild with a different option}
+  Rebuild a package with different build options is easy
+  \begin{enumerate}
+    \item Edit the build script to use a different option: the \%build
+          option for an rpm .spec file, the debian/build file for a debian
+          package
+    \item Update the package release number
+    \item Rebuild the package
+  \end{enumerate}
+
+  \begin{block}{Example with RPM}
+\begin{verbatim}
+$ cd rpm
+$ sed -i 's/--without-option/--with-option/' \
+                        SPECS/mypkg.spec
+$ rpmbuild -ba SPECS/mypkg.spec
+\end{verbatim}
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Packages: patching software}
+
+  Sometimes patching software is needed
+
+  \begin{itemize}
+    \item packages make it easy to include patches
+    \item keeping patch separate from original source code
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Packages: installed version}
+  Packages make it easy to :
+  \begin{itemize}
+    \item Check the version of installed package (rpm -q packagename)
+    \item Check package providing a file (rpm -qf /path)
+    \item Check files provided by a package (rpm -ql packagename)
+    \item Check modified files (rpm -q -V packagename)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Packages: Changelog}
+  In case of problem, it's useful to view recent changes on your software
+  \begin{itemize}
+    \item package changelog
+    \item keeping source package in a VCS
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Packages: distribute}
+
+  Create a package repository to distribute packages : a directory
+  containing packages and metadata to allow package manager to find and
+  download needed packages
+
+  \begin{itemize}
+    \item repository shared using http, ftp, rsync, nfs, etc ...
+    \item automatically install latest version of packages available
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Packages: easy and automated installation}
+  
+  \begin{itemize}
+    \item Install packages with a simple command
+    \item Makes it possible to use configuration management tool
+  \end{itemize}
+\end{frame}
+
+\section{Why you need a build system}
+
+\begin{frame}
+  \frametitle{Packages build system}
+
+  What is a packages build system ?
+
+  \begin{itemize}
+    \item simple interface to submit build of a package
+    \item manage packages repository
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Build system: easier and faster}
+
+  \begin{itemize}
+    \item Submit a build with a single command
+    \item Building on fast servers
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Build system: clean environement}
+
+  Each build is done in a new clean environement
+  \begin{itemize}
+    \item more chances of having a reproductible build
+    \item does not depend on custom settings on the build environement
+    \item missing build dependencies in source package are detected
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Build system: multiple architectures and distributions}
+
+  A build system can allow you to build packages for :
+  \begin{itemize}
+    \item different distributions, or releases of a distribution
+    \item different architectures (i586, x86\_64, arm, etc ...)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Build system: less error-prone}
+
+  Moving packages to their repository is a boring task
+\end{frame}
+
+\begin{frame}
+  \frametitle{Build system: packaging policies}
+
+  Build system can enforce some packaging policies
+
+  \begin{itemize}
+    \item rpmlint
+    \item lintian
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Build system: permissions}
+
+  Define specific permissions on some repositories or packages
+\end{frame}
+
+\begin{frame}
+  \frametitle{Build system: VCS integration}
+  
+  \begin{itemize}
+    \item integration with a VCS
+    \item traceability of source packages
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{How to install a build system ?}
+
+  Some build systems :
+  \begin{itemize}
+    \item Open Build Service
+    \item Mageia Build System
+    \item Fedora Build System
+    \item Debian Build System
+    \item ...
+  \end{itemize}
+\end{frame}
+
+\section{Why you need a configuration management tool}
+
+\begin{frame}
+  \frametitle{Configuration management tool}
+  Instead of making changes on the server, describe the change and
+  let the configuration management tool do it.
+
+  Some configuration management tools :
+  \begin{itemize}
+    \item Puppet
+    \item CFEngine
+    \item Ansible
+    \item Salt Stack
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Why use a configuration management tool}
+
+  \begin{itemize}
+    \item Manage your infrastructure like a software project, and receive
+          contributions
+    \item Commit logs : review changes, know what other people are doing
+    \item Patch review, patch submissions
+    \item Testing environment : easily install a new server for testing
+    \item Reusability : create a module to configure your software, and use
+          it in different servers or projects
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{center}
+    Questions
+  \end{center}
+\end{frame}
+
+\end{document}
+% vim: sw=2
